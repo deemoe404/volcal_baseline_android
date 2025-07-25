@@ -1,38 +1,43 @@
 package com.example.client_volcal_baseline.network
 
-import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
-import retrofit2.http.Streaming
-import retrofit2.http.Url
 
 interface Api {
-    @POST("/process")
-    suspend fun createTask(@Body body: TaskRequest): TaskResponse
+    @POST("/create_task")
+    suspend fun createTask(): CreateTaskResponse
 
-    @GET("/status/{id}")
-    suspend fun checkStatus(@Path("id") id: String): StatusResponse
+    @POST("/start_task/{id}")
+    suspend fun startTask(@Path("id") id: String): StartTaskResponse
 
-    @Streaming
-    @GET("/download/{key}")
-    suspend fun downloadCsv(@Path("key") key: String): okhttp3.ResponseBody
-
-    @Streaming
-    @GET("/download/{key}")
-    suspend fun downloadImage(@Path("key") key: String): okhttp3.ResponseBody
-
-    @GET("/presign/{key}")
-    suspend fun presign(@Path("key") key: String): PresignResp
-
-    @Streaming
-    @GET
-    suspend fun downloadPresigned(@Url url: String): okhttp3.ResponseBody
+    @GET("/query_task/{id}")
+    suspend fun queryTask(@Path("id") id: String): QueryTaskResponse
 }
 
-data class PresignResp(val url: String)
+data class CreateTaskResponse(
+    val task_id: String,
+    val upload_urls: Map<String, String>
+)
 
-data class StatusResponse(
+data class StartTaskResponse(val started: Boolean)
+
+data class HullItem(
+    val id: String,
+    val area: Double,
+    val cut_volume: Double,
+    val fill_volume: Double,
+    val net_volume: Double,
+    val image_key: String,
+    val image_url: String,
+)
+
+data class QueryResults(
+    val hulls: List<HullItem> = emptyList()
+)
+
+data class QueryTaskResponse(
     val status: String,
-    val result: String?
+    val missing: List<String>? = null,
+    val results: QueryResults? = null,
 )

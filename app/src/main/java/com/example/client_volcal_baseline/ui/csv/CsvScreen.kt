@@ -14,10 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.Composable
-import com.example.client_volcal_baseline.network.RetrofitProvider
 
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -67,16 +64,13 @@ private fun FullScreenImage(
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun CsvScreen(
-    resultKey: String,
+    taskId: String,
     onBack: () -> Unit = {}
 ) {
     var fullImageUrl by remember { mutableStateOf<String?>(null) }
 
     val ctx = LocalContext.current
-    val vm: CsvViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-        override fun <T : androidx.lifecycle.ViewModel> create(cls: Class<T>): T =
-            CsvViewModel(resultKey) as T
-    })
+    val vm: CsvViewModel = viewModel(factory = CsvViewModel.provideFactory(taskId))
 
     val rows by vm.items.collectAsStateWithLifecycle()
     val checked by vm.checked.collectAsStateWithLifecycle()
@@ -113,21 +107,16 @@ fun CsvScreen(
                     )
                     Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
                         Text(item.id, style = MaterialTheme.typography.bodyLarge)
-                        Text("area=${item.area}, cut=${item.cut}, fill=${item.fill}, net=${item.net}")
-                    }
-                    val imgUrl by produceState<String?>(null, item.imageKey) {
-                        value = try {
-                            RetrofitProvider.api.presign(item.imageKey).url
-                        } catch (e: Exception) { null }
+                        Text("area=${item.area}, cut=${item.cut_volume}, fill=${item.fill_volume}, net=${item.net_volume}")
                     }
                     AsyncImage(
-                        model = imgUrl,
+                        model = item.image_url,
                         contentDescription = item.id,
                         modifier = Modifier
                             .size(64.dp)
                             .background(Color.LightGray)
                             .clickable {
-                                imgUrl?.let { fullImageUrl = it }
+                                fullImageUrl = item.image_url
                             }
                     )
                 }

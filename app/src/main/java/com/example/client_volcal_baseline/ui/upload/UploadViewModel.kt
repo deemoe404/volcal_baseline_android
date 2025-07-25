@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.ViewModelProvider
 import com.example.client_volcal_baseline.network.RetrofitProvider
-import com.example.client_volcal_baseline.network.TaskRequest
 import com.example.client_volcal_baseline.util.copyToTemp
 import com.example.client_volcal_baseline.util.displayName
 import io.tus.android.client.TusPreferencesURLStore
@@ -17,9 +16,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.URL
-import java.util.UUID
 
-data class Slot(val uri: Uri? = null, val size: Long? = null, val key: String? = null)
+data class Slot(val uri: Uri? = null, val size: Long? = null)
 
 private const val SLOT_COUNT = 4
 
@@ -29,7 +27,6 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
 
     private val client: TusClient by lazy {
         TusClient().apply {
-            setUploadCreationURL(URL("http://192.168.1.26:1080/files/"))
             enableResuming(TusPreferencesURLStore(prefs))
             enableRemoveFingerprintOnSuccess()
         }
@@ -51,7 +48,7 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
         }
     }
 
-    private suspend fun uploadOne(uri: Uri, slotIdx: Int): String =
+    private suspend fun uploadOne(uri: Uri, slotIdx: Int, url: String) =
         withContext(Dispatchers.IO) {
 
             val file = uri.copyToTemp(ctx)
@@ -61,7 +58,7 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
                 metadata = mapOf("filename" to fileName)
             }
 
-            val uploader = client.resumeOrCreateUpload(upload)
+            val uploader = client.beginOrResumeUploadFromURL(upload, URL(url))
             var bytes: Int
             do {
                 bytes = uploader.uploadChunk()
@@ -71,21 +68,21 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
                 }
             } while (bytes > 0)
             uploader.finish()
-
-            uploader.uploadURL.toString().substringAfterLast("/").substringBefore('+')
         }
 
     fun uploadAll(onDone: (String) -> Unit, onError: (Throwable) -> Unit) =
         viewModelScope.launch {
             try {
-                val keys = slots.value.mapIndexed { idx, slot ->
-                    uploadOne(slot.uri!!, idx)
+                val createRes = RetrofitProvider.api.createTask()
+                val urls = createRes.upload_urls
+                val order = listOf("pre", "post", "shp", "shx")
+
+                order.forEachIndexed { idx, label ->
+                    uploadOne(slots.value[idx].uri!!, idx, urls[label]!!)
                 }
                 _progress.value = null
-                val taskId = RetrofitProvider.api
-                    .createTask(TaskRequest(keys[0], keys[1], keys[2], keys[3]))
-                    .task_id
-                onDone(taskId)
+                RetrofitProvider.api.startTask(createRes.task_id)
+                onDone(createRes.task_id)
             } catch (e: Exception) {
                 _progress.value = null
                 onError(e)

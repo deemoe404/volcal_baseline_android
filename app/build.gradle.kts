@@ -70,7 +70,6 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation(libs.work.runtime.ktx)
     implementation(libs.coil.compose)
-    implementation(libs.opencsv)
     implementation(libs.recyclerview)
 
     implementation(libs.navigation.compose)

@@ -5,13 +5,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.client_volcal_baseline.network.RetrofitProvider
+import com.example.client_volcal_baseline.network.QueryResults
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class TaskState(
     val status: String = "unknown",
-    val resultKey: String? = null,
+    val results: QueryResults? = null,
     val loading: Boolean = false
 )
 
@@ -34,10 +35,10 @@ class StatusViewModel(private val taskId: String) : ViewModel() {
     private suspend fun fetchOnce() {
         try {
             _state.update { it.copy(loading = true) }
-            val res = RetrofitProvider.api.checkStatus(taskId)
+            val res = RetrofitProvider.api.queryTask(taskId)
             _state.value = TaskState(
                 status = res.status,
-                resultKey = res.result,
+                results = res.results,
                 loading = false
             )
         } catch (e: Exception) {

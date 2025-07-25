@@ -1,6 +1,5 @@
 package com.example.client_volcal_baseline.ui.status
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -29,8 +28,8 @@ fun StatusScreen(
     }
 
     LaunchedEffect(state.status) {
-        if (state.status == "done" && state.resultKey != null) {
-            onDone(state.resultKey!!)
+        if (state.status == "done") {
+            onDone(taskId)
         }
     }
 
