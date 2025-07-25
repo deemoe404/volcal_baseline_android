@@ -58,6 +58,8 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
                 metadata = mapOf("filename" to fileName)
             }
 
+            // The first package needs to have the length header
+            client.headers = mapOf("Upload-Length" to upload.size.toString())
             val uploader = client.beginOrResumeUploadFromURL(upload, URL(url))
             var bytes: Int
             do {
@@ -66,6 +68,9 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
                     val frac = uploader.offset.toFloat() / upload.size.toFloat()
                     _progress.value = (slotIdx + frac) / SLOT_COUNT
                 }
+
+                // Remove the length header after the first package
+                client.headers = emptyMap()
             } while (bytes > 0)
             uploader.finish()
         }
@@ -75,13 +80,15 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
             try {
                 val createRes = RetrofitProvider.api.createTask()
                 val urls = createRes.upload_urls
+                println(urls)
                 val order = listOf("pre", "post", "shp", "shx")
 
                 order.forEachIndexed { idx, label ->
                     uploadOne(slots.value[idx].uri!!, idx, urls[label]!!)
                 }
                 _progress.value = null
-                RetrofitProvider.api.startTask(createRes.task_id)
+//                RetrofitProvider.api.startTask(createRes.task_id)
+                println(createRes.task_id)
                 onDone(createRes.task_id)
             } catch (e: Exception) {
                 _progress.value = null
