@@ -10,7 +10,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.client_volcal_baseline.ui.csv.CsvPlaceholder
 import com.example.client_volcal_baseline.ui.csv.CsvScreen
 import com.example.client_volcal_baseline.ui.status.StatusScreen
 import com.example.client_volcal_baseline.ui.upload.UploadScreen
@@ -46,16 +45,16 @@ private fun AppNavRoot() {
         /** 界面 2 —— 轮询任务 **/
         composable("status/{taskId}") { backStack ->
             val taskId = backStack.arguments?.getString("taskId")!!
-            StatusScreen(taskId) { resultKey ->
-                nav.navigate("csv/$resultKey") {
+            StatusScreen(taskId) {
+                nav.navigate("csv/$taskId") {
                     popUpTo("upload") { inclusive = false } // 保留回栈
                 }
             }
         }
 
         /** 界面 3 —— CSV 展示（先占位） **/
-        composable("csv/{resultKey}") { back ->
-            CsvScreen(back.arguments?.getString("resultKey")!!)
+        composable("csv/{taskId}") { back ->
+            CsvScreen(back.arguments?.getString("taskId")!!)
         }
     }
 }
