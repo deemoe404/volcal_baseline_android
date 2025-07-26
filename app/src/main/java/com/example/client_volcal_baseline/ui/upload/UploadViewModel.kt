@@ -9,6 +9,7 @@ import com.example.client_volcal_baseline.network.RetrofitProvider
 import com.example.client_volcal_baseline.util.copyToTemp
 import com.example.client_volcal_baseline.util.displayName
 import com.example.client_volcal_baseline.util.TaskHistory
+import com.example.client_volcal_baseline.util.TaskEntry
 import io.tus.android.client.TusPreferencesURLStore
 import io.tus.java.client.TusClient
 import io.tus.java.client.TusUpload
@@ -40,7 +41,7 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
     val progress: StateFlow<Float?> = _progress.asStateFlow()
 
     private val _tasks = MutableStateFlow(TaskHistory.getAll(ctx))
-    val tasks: StateFlow<List<String>> = _tasks.asStateFlow()
+    val tasks: StateFlow<List<TaskEntry>> = _tasks.asStateFlow()
 
     val ready: StateFlow<Boolean> = combine(slots, progress) { s, p ->
         s.all { it.uri != null } && p == null

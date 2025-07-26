@@ -18,6 +18,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.text.DecimalFormat
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun UploadScreen(
@@ -29,6 +31,7 @@ fun UploadScreen(
     val progress by vm.progress.collectAsStateWithLifecycle()
     val ready by vm.ready.collectAsStateWithLifecycle()
     val tasks by vm.tasks.collectAsStateWithLifecycle()
+    val timeFormat = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
     val ctx = LocalContext.current
     val df = remember { DecimalFormat("#,##0.# KB") }
 
@@ -90,14 +93,19 @@ fun UploadScreen(
                     .fillMaxWidth()
                     .heightIn(max = 240.dp)
             ) {
-                items(tasks) { id ->
-                    Text(
-                        text = id,
-                        modifier = Modifier
+                items(tasks) { entry ->
+                    Row(
+                        Modifier
                             .fillMaxWidth()
-                            .clickable { onHistoryClick(id) }
-                            .padding(vertical = 8.dp)
-                    )
+                            .clickable { onHistoryClick(entry.id) }
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(entry.id)
+                        if (entry.time > 0) {
+                            Text(timeFormat.format(java.util.Date(entry.time)))
+                        }
+                    }
                     Divider()
                 }
             }
