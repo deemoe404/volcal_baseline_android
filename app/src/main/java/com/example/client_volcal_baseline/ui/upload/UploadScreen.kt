@@ -94,12 +94,11 @@ fun UploadScreen(
                     .heightIn(max = 240.dp)
             ) {
                 items(tasks) { entry ->
-                    Row(
+                    Column(
                         Modifier
                             .fillMaxWidth()
                             .clickable { onHistoryClick(entry.id) }
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(vertical = 8.dp)
                     ) {
                         Text(entry.id)
                         if (entry.time > 0) {
