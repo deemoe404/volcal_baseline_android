@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,11 +22,13 @@ import java.text.DecimalFormat
 @Composable
 fun UploadScreen(
     vm: UploadViewModel,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onHistoryClick: (String) -> Unit = onNavigate
 ) {
     val slots by vm.slots.collectAsStateWithLifecycle()
     val progress by vm.progress.collectAsStateWithLifecycle()
     val ready by vm.ready.collectAsStateWithLifecycle()
+    val tasks by vm.tasks.collectAsStateWithLifecycle()
     val ctx = LocalContext.current
     val df = remember { DecimalFormat("#,##0.# KB") }
 
@@ -77,6 +81,26 @@ fun UploadScreen(
                 enabled = ready,
                 modifier = Modifier.fillMaxWidth()
             ) { Text("Next") }
+
+            Spacer(Modifier.height(16.dp))
+            Text("Previous Tasks", style = MaterialTheme.typography.titleMedium)
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 240.dp)
+            ) {
+                items(tasks) { id ->
+                    Text(
+                        text = id,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onHistoryClick(id) }
+                            .padding(vertical = 8.dp)
+                    )
+                    Divider()
+                }
+            }
         }
 
         progress?.let {

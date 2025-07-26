@@ -37,9 +37,11 @@ private fun AppNavRoot() {
         composable("upload") {
             // 直接把 Activity 作为 context 传给 ViewModel（简单起步）
             val vm: UploadViewModel = viewModel(factory = UploadViewModel.provideFactory(LocalContext.current))
-            UploadScreen(vm) { taskId ->
-                nav.navigate("status/$taskId")
-            }
+            UploadScreen(
+                vm,
+                onNavigate = { taskId -> nav.navigate("status/$taskId") },
+                onHistoryClick = { taskId -> nav.navigate("status/$taskId") }
+            )
         }
 
         /** 界面 2 —— 轮询任务 **/
