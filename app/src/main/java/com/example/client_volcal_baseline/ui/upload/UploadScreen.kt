@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,15 +18,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.text.DecimalFormat
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun UploadScreen(
     vm: UploadViewModel,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onHistoryClick: (String) -> Unit = onNavigate
 ) {
     val slots by vm.slots.collectAsStateWithLifecycle()
     val progress by vm.progress.collectAsStateWithLifecycle()
     val ready by vm.ready.collectAsStateWithLifecycle()
+    val tasks by vm.tasks.collectAsStateWithLifecycle()
+    val timeFormat = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
     val ctx = LocalContext.current
     val df = remember { DecimalFormat("#,##0.# KB") }
 
@@ -77,6 +84,30 @@ fun UploadScreen(
                 enabled = ready,
                 modifier = Modifier.fillMaxWidth()
             ) { Text("Next") }
+
+            Spacer(Modifier.height(16.dp))
+            Text("Previous Tasks", style = MaterialTheme.typography.titleMedium)
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 240.dp)
+            ) {
+                items(tasks) { entry ->
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onHistoryClick(entry.id) }
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Text(entry.id)
+                        if (entry.time > 0) {
+                            Text(timeFormat.format(java.util.Date(entry.time)))
+                        }
+                    }
+                    Divider()
+                }
+            }
         }
 
         progress?.let {

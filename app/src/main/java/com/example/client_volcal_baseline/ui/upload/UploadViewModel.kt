@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.client_volcal_baseline.network.RetrofitProvider
 import com.example.client_volcal_baseline.util.copyToTemp
 import com.example.client_volcal_baseline.util.displayName
+import com.example.client_volcal_baseline.util.TaskHistory
+import com.example.client_volcal_baseline.util.TaskEntry
 import io.tus.android.client.TusPreferencesURLStore
 import io.tus.java.client.TusClient
 import io.tus.java.client.TusUpload
@@ -38,6 +40,9 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
     private val _progress = MutableStateFlow<Float?>(null)
     val progress: StateFlow<Float?> = _progress.asStateFlow()
 
+    private val _tasks = MutableStateFlow(TaskHistory.getAll(ctx))
+    val tasks: StateFlow<List<TaskEntry>> = _tasks.asStateFlow()
+
     val ready: StateFlow<Boolean> = combine(slots, progress) { s, p ->
         s.all { it.uri != null } && p == null
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
@@ -46,6 +51,11 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
         _slots.update { list ->
             list.toMutableList().also { it[index] = it[index].copy(uri = uri, size = size) }
         }
+    }
+
+    private fun addTask(id: String) {
+        TaskHistory.add(ctx, id)
+        _tasks.value = TaskHistory.getAll(ctx)
     }
 
     private suspend fun uploadOne(uri: Uri, slotIdx: Int, url: String) =
@@ -89,6 +99,7 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
                 _progress.value = null
 //                RetrofitProvider.api.startTask(createRes.task_id)
                 println(createRes.task_id)
+                addTask(createRes.task_id)
                 onDone(createRes.task_id)
             } catch (e: Exception) {
                 _progress.value = null
