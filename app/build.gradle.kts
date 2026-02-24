@@ -6,6 +6,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val apiBaseUrl = providers
+    .gradleProperty("API_BASE_URL")
+    .orElse("http://192.168.1.26:8000/")
+    .get()
+
 android {
     namespace = "com.example.client_volcal_baseline"
     compileSdk = 36
@@ -16,6 +21,8 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -35,6 +42,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

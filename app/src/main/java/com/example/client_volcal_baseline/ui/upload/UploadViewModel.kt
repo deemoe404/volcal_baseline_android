@@ -2,9 +2,11 @@ package com.example.client_volcal_baseline.ui.upload
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.ViewModelProvider
+import com.example.client_volcal_baseline.BuildConfig
 import com.example.client_volcal_baseline.network.RetrofitProvider
 import com.example.client_volcal_baseline.util.copyToTemp
 import com.example.client_volcal_baseline.util.displayName
@@ -22,6 +24,7 @@ import java.net.URL
 data class Slot(val uri: Uri? = null, val size: Long? = null)
 
 private const val SLOT_COUNT = 4
+private const val TAG = "UploadViewModel"
 
 class UploadViewModel(private val ctx: Context) : ViewModel() {
 
@@ -60,29 +63,35 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
 
     private suspend fun uploadOne(uri: Uri, slotIdx: Int, url: String) =
         withContext(Dispatchers.IO) {
+            try {
+                val file = uri.copyToTemp(ctx)
 
-            val file = uri.copyToTemp(ctx)
-
-            val fileName = uri.displayName(ctx)
-            val upload = TusUpload(file).apply {
-                metadata = mapOf("filename" to fileName)
-            }
-
-            // The first package needs to have the length header
-            client.headers = mapOf("Upload-Length" to upload.size.toString())
-            val uploader = client.beginOrResumeUploadFromURL(upload, URL(url))
-            var bytes: Int
-            do {
-                bytes = uploader.uploadChunk()
-                if (bytes > 0) {
-                    val frac = uploader.offset.toFloat() / upload.size.toFloat()
-                    _progress.value = (slotIdx + frac) / SLOT_COUNT
+                val fileName = uri.displayName(ctx)
+                val upload = TusUpload(file).apply {
+                    metadata = mapOf("filename" to fileName)
                 }
 
-                // Remove the length header after the first package
-                client.headers = emptyMap()
-            } while (bytes > 0)
-            uploader.finish()
+                // The first package needs to have the length header
+                client.headers = mapOf("Upload-Length" to upload.size.toString())
+                val uploader = client.beginOrResumeUploadFromURL(upload, URL(url))
+                var bytes: Int
+                do {
+                    bytes = uploader.uploadChunk()
+                    if (bytes > 0) {
+                        val frac = uploader.offset.toFloat() / upload.size.toFloat()
+                        _progress.value = (slotIdx + frac) / SLOT_COUNT
+                    }
+
+                    // Remove the length header after the first package
+                    client.headers = emptyMap()
+                } while (bytes > 0)
+                uploader.finish()
+            } catch (e: Exception) {
+                throw RuntimeException(
+                    "slot=${slotIdx + 1} upload failed, url=$url, reason=${e.message ?: e::class.java.simpleName}",
+                    e
+                )
+            }
         }
 
     fun uploadAll(onDone: (String) -> Unit, onError: (Throwable) -> Unit) =
@@ -103,6 +112,7 @@ class UploadViewModel(private val ctx: Context) : ViewModel() {
                 onDone(createRes.task_id)
             } catch (e: Exception) {
                 _progress.value = null
+                Log.e(TAG, "uploadAll failed, api=${BuildConfig.API_BASE_URL}", e)
                 onError(e)
             }
         }

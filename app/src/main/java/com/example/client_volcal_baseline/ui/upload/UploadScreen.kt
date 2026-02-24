@@ -21,6 +21,14 @@ import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+private fun Throwable.briefCause(): String {
+    val chain = generateSequence(this) { it.cause }
+        .take(3)
+        .map { t -> "${t::class.java.simpleName}: ${t.message ?: "no message"}" }
+        .toList()
+    return chain.joinToString(" <- ")
+}
+
 @Composable
 fun UploadScreen(
     vm: UploadViewModel,
@@ -78,7 +86,7 @@ fun UploadScreen(
             Button(
                 onClick = {
                     vm.uploadAll(onNavigate) { e ->
-                        Toast.makeText(ctx, "Upload Failed：${e.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(ctx, "Upload Failed: ${e.briefCause()}", Toast.LENGTH_LONG).show()
                     }
                 },
                 enabled = ready,

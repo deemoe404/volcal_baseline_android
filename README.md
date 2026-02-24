@@ -22,6 +22,25 @@ For more technical details, refer to the respective upstream repositories.
 
 ---
 
+## 🔧 Server Address Configuration
+
+The app base URL is configurable through a Gradle property:
+
+```bash
+./gradlew assembleDebug -PAPI_BASE_URL=http://192.168.1.26:8000/
+```
+
+If omitted, the default value is `http://192.168.1.26:8000/`.
+
+For end-to-end success with `volcal_baseline_server`, keep these three endpoints on the
+same reachable host/IP:
+
+- Android `API_BASE_URL`: `http://<HOST>:8000/`
+- Server `TUS_ENDPOINT`: `http://<HOST>:1080/files`
+- Server `MINIO_ENDPOINT`: `http://<HOST>:9000`
+
+---
+
 ## 📦 License
 
 This project is released under the [MIT License](./LICENSE).
